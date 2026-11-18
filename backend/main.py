@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from groq import Groq
 from pydantic import BaseModel
 from pypdf import PdfReader
@@ -228,8 +228,11 @@ def chat(request: ChatRequest):
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 if FRONTEND_DIR.exists():
-    @app.get("/")
+    @app.get("/", response_class=HTMLResponse)
     def serve_index():
-        return FileResponse(FRONTEND_DIR / "index.html")
+        index_file = FRONTEND_DIR / "index.html"
+        if index_file.exists():
+            return HTMLResponse(content=index_file.read_text(encoding="utf-8"))
+        return HTMLResponse(content="<h1>Frontend index.html not found</h1>", status_code=404)
 
     app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
